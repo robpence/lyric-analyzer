@@ -1,6 +1,10 @@
 import data from "./sampleLyricResponse.json" with { type: 'json' };
 import commonWordList from "./filterWordsList.json" with { type: 'json' };
-import songList from "./songList.json" with { type: 'json' };
+// import songList from "./songList.json" with { type: 'json' };
+import getArtistId from "./services/getArtistId.js";
+import getAlbumsByArtist from "./services/getAlbumsByArtist.js";
+import getSongListByAlbum from "./services/getSongListByAlbum.js";
+import getReleasesByReleaseGroup from "./services/getReleasesByReleaseGroup.js";
 let env = "dev1";
 
 async function LyricAnalyzer(song, artist) {
@@ -55,10 +59,9 @@ async function LyricAnalyzer(song, artist) {
 // await LyricAnalyzer();
 
 // for every song in the song list make a call to LyricAnalyzer and store the result in a map.
-async function createWordMapFromAllSongs(song, artist) {
+async function createWordMapFromAllSongs(songList, artist) {
     let songWordMaps = {};
     for (let song of songList) {
-        let artist = "Olivia Rodrigo";
         let title = song;
         await LyricAnalyzer(title, artist).then(wordMap => {
             songWordMaps[title] = wordMap;
@@ -91,5 +94,34 @@ async function createWordMapFromAllSongs(song, artist) {
     return sortedMap;
 }
 
+async function getAlbumInfo(artist) {
 
-await createWordMapFromAllSongs();
+    let artistId = await getArtistId(artist);
+    console.log("artistId: ", artistId);
+
+    let albums = await getAlbumsByArtist(artistId);
+    console.log("albums: ", albums);
+
+    // for each album in albums get the release id using getReleasesByReleaseGroup and log it.
+    let releaseIds = [];
+    for (let album of albums) {
+        let releaseId = await getReleasesByReleaseGroup(album);
+        if (releaseId !== null) {
+            releaseIds.push(releaseId);
+        }
+    }
+    console.log("releaseIds: ", releaseIds);
+
+    let songList = [];
+    for (let releaseId of releaseIds) {
+        let songs = await getSongListByAlbum(releaseId);
+        songList.push(...songs);
+    }
+    console.log("songs: ", songList);
+
+    return songList;
+}
+
+let artist = "Sombr";
+let trackList = await getAlbumInfo(artist);
+await createWordMapFromAllSongs(trackList, artist);
