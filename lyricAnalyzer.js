@@ -1,6 +1,6 @@
-import data from "./sampleLyricResponse.json" with { type: 'json' };
-import commonWordList from "./filterWordsList.json" with { type: 'json' };
-// import songList from "./songList.json" with { type: 'json' };
+import data from "./data/sampleLyricResponse.json" with { type: 'json' };
+import commonWordList from "./data/filterWordsList.json" with { type: 'json' };
+// import songList from "./data/songList.json" with { type: 'json' };
 import getArtistId from "./services/getArtistId.js";
 import getAlbumsByArtist from "./services/getAlbumsByArtist.js";
 import getSongListByAlbum from "./services/getSongListByAlbum.js";
@@ -115,13 +115,20 @@ async function getAlbumInfo(artist) {
     let songList = [];
     for (let releaseId of releaseIds) {
         let songs = await getSongListByAlbum(releaseId);
-        songList.push(...songs);
+        // only push the song titles to the song list if they arent already in the song list.
+        for (let song of songs) {
+            if (!songList.includes(song)) {
+                songList.push(song);
+            }
+        }
+        // songList.push(...songs);
     }
     console.log("songs: ", songList);
 
     return songList;
 }
 
-let artist = "Sombr";
+// Example usage - now handled by server.js
+let artist = "Glass Animals";
 let trackList = await getAlbumInfo(artist);
 await createWordMapFromAllSongs(trackList, artist);
